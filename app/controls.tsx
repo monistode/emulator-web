@@ -1,4 +1,9 @@
-import { Runner, WasmProcessorContinue } from "monistode-emulator-bindings";
+import {
+  Runner,
+  WasmProcessorContinue,
+  available_processors,
+  ProcessorType,
+} from "monistode-emulator-bindings";
 import { Item } from "./output";
 import {
   VscDebugRestart,
@@ -9,12 +14,15 @@ import {
 import { Tooltip } from "react-tooltip";
 import { useDropzone } from "react-dropzone";
 import { useCallback, useEffect, useState } from "react";
+import Select from "react-select";
 
 function ExecutableUploader({
+  processorType,
   setProcessor,
   setRunning,
   setLast,
 }: {
+  processorType: ProcessorType;
   setProcessor: (processor: Runner) => void;
   setRunning: (running: boolean) => void;
   setLast: (last: Uint8Array) => void;
@@ -30,9 +38,8 @@ function ExecutableUploader({
       const arrayBuffer = reader.result as ArrayBuffer;
       const array = new Uint8Array(arrayBuffer);
       setLast(array);
-      setProcessor(new Runner(0, array));
+      setProcessor(new Runner(processorType, array));
       setRunning(true);
-      console.log(array);
     };
     reader.readAsArrayBuffer(file);
   }, []);
@@ -53,7 +60,46 @@ function ExecutableUploader({
   );
 }
 
+function ProcessorTypeChooser({
+  processorType,
+  setProcessorType,
+}: {
+  processorType: ProcessorType;
+  setProcessorType: (processorType: ProcessorType) => void;
+}) {
+  return (
+    <Select
+      unstyled
+      classNames={{
+        control: () => "bg-gray-950 p-2 rounded border border-gray-700",
+        menu: () => "bg-gray-950 rounded",
+        option: () => "bg-gray-950 hover:bg-gray-800 p-2 rounded",
+        singleValue: () => "bg-gray-950",
+      }}
+      options={available_processors().map((processor) => ({
+        value: processor.type_(),
+        label: processor.name(),
+      }))}
+      value={{
+        value: processorType,
+        label:
+          available_processors()
+            .find((processor) => processor.type_() === processorType)
+            ?.name() ?? "Unknown",
+      }}
+      onChange={(option) => {
+        if (option === null) {
+          return;
+        }
+        setProcessorType(option.value);
+      }}
+    />
+  );
+}
+
 export default function Controls({
+  processorType,
+  setProcessorType,
   processor,
   setProcessor,
   setOutputs,
@@ -61,6 +107,8 @@ export default function Controls({
   running,
   setRunning,
 }: {
+  processorType: ProcessorType;
+  setProcessorType: (processorType: ProcessorType) => void;
   processor: Runner | null;
   setProcessor: (processor: Runner) => void;
   setOutputs: (set: (items: Item[]) => Item[]) => void;
@@ -73,6 +121,9 @@ export default function Controls({
   const output = (port: number, value: number) => {
     setOutputs((outputs) => [...outputs, { port, value }]);
   };
+  const input = (port: number) => {
+    return 0;
+  };
 
   useEffect(() => {
     setStop(null);
@@ -81,9 +132,14 @@ export default function Controls({
   return (
     <div className="flex flex-row p-4 gap-4 justify-evenly items-center">
       <ExecutableUploader
+        processorType={processorType}
         setProcessor={setProcessor}
         setRunning={setRunning}
         setLast={setLast}
+      />
+      <ProcessorTypeChooser
+        processorType={processorType}
+        setProcessorType={setProcessorType}
       />
       <span className="flex-grow" />
       {running ? null : <span className="text-gray-500">Halted</span>}
@@ -93,7 +149,7 @@ export default function Controls({
         }`}
         onClick={() => {
           if (last !== null) {
-            setProcessor(new Runner(0, last));
+            setProcessor(new Runner(processorType, last));
             setRunning(true);
           }
         }}
@@ -107,7 +163,7 @@ export default function Controls({
           running ? "hover:bg-gray-800" : "text-gray-500"
         }`}
         onClick={() => {
-          const state = processor?.run(output);
+          const state = processor?.run(output, input);
           if (state === WasmProcessorContinue.Halt) {
             setRunning(false);
           }
@@ -133,7 +189,7 @@ export default function Controls({
 
           const run = () => {
             if (running.running) {
-              const result = processor!.run_n(output, 10000);
+              const result = processor!.run_n(output, input, 10000);
               if (result === WasmProcessorContinue.Continue) {
                 setTimeout(run, 0);
               } else {
