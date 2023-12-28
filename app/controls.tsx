@@ -27,34 +27,47 @@ function ExecutableUploader({
   setRunning: (running: boolean) => void;
   setLast: (last: Uint8Array) => void;
 }) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length !== 1) {
-      return;
-    }
-    const file = acceptedFiles[0];
-    // Now we get a uint8array from the file
-    const reader = new FileReader();
-    reader.onload = () => {
-      const arrayBuffer = reader.result as ArrayBuffer;
-      const array = new Uint8Array(arrayBuffer);
-      setLast(array);
-      setProcessor(new Runner(processorType, array));
-      setRunning(true);
-    };
-    reader.readAsArrayBuffer(file);
-  }, []);
+  const [error_message, setErrorMessage] = useState<string | null>(null);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length !== 1) {
+        return;
+      }
+      const file = acceptedFiles[0];
+      // Now we get a uint8array from the file
+      const reader = new FileReader();
+      reader.onload = () => {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const array = new Uint8Array(arrayBuffer);
+        setLast(array);
+        const runner = new Runner(processorType, array);
+        setProcessor(runner);
+        setErrorMessage(runner.error_message() ?? null);
+        setRunning((runner.error_message() ?? null) === null);
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    [processorType, setProcessor, setRunning, setLast]
+  );
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
     <div
-      className="flex flex-col gap-2 p-4 bg-gray-950 rounded cursor-pointer"
+      className="flex flex-col gap-0 p-4 bg-gray-950 rounded cursor-pointer justify-center items-center"
       {...getRootProps()}
     >
       <input {...getInputProps()} />
       {isDragActive ? (
         <span>Drop the files here ...</span>
       ) : (
-        <span className="font-bold">Upload executable</span>
+        <>
+          <span className="font-bold">Upload executable</span>
+          {error_message && (
+            <span className="text-xs font-bold text-red-500">
+              {error_message}
+            </span>
+          )}
+        </>
       )}
     </div>
   );
@@ -149,8 +162,9 @@ export default function Controls({
         }`}
         onClick={() => {
           if (last !== null) {
-            setProcessor(new Runner(processorType, last));
-            setRunning(true);
+            const runner = new Runner(processorType, last);
+            setProcessor(runner);
+            setRunning((runner.error_message() ?? null) === null);
           }
         }}
         data-tooltip-id="button-hints"
@@ -188,6 +202,7 @@ export default function Controls({
           });
 
           const run = () => {
+            refresh();
             if (running.running) {
               const result = processor!.run_n(output, input, 10000);
               if (result === WasmProcessorContinue.Continue) {

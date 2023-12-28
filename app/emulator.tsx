@@ -20,7 +20,7 @@ function Emulator() {
     if (processor === null) {
       const processor = new Runner(
         ProcessorType.Stack,
-        Uint8Array.from([0, 0, 0, 0, 0])
+        Uint8Array.from([1, 0, 0, 0, 0])
       );
       setProcessor(processor);
     }
