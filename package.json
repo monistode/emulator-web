@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "monistode-emulator-bindings": "0.1.10",
+    "monistode-emulator-bindings": "0.1.12",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
