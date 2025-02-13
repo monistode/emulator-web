@@ -167,7 +167,7 @@ function MemoryGrid({
                   );
                 })}
               </div>
-              <div className="flex flex-row font-mono bg-neutral-900 px-2 py-1 rounded">
+              <div className="flex flex-row font-mono bg-neutral-900 p-2 rounded">
                 {Array.from(rowData).map((value, i) => (
                   <AsciiChar key={i} value={value} />
                 ))}
@@ -248,10 +248,10 @@ export default function Memory() {
   if (!memory || memory.length === 0) {
     return (
       <>
-        <CardHeader className="py-2">
+        <CardHeader>
           <CardTitle>Memory</CardTitle>
         </CardHeader>
-        <CardContent className="py-1">
+        <CardContent>
           <div className="text-muted-foreground text-center">
             No memory available
           </div>
@@ -291,7 +291,7 @@ export default function Memory() {
           />
         </div>
       </CardHeader>
-      <CardContent className="py-1">
+      <CardContent>
         {memory.length === 1 ? (
           <MemoryView block={memory[0]} />
         ) : (

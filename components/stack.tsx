@@ -49,7 +49,7 @@ export function Stack() {
 
   return (
     <>
-      <CardHeader className="py-2">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Stack</CardTitle>
           <ToggleGroup
@@ -75,7 +75,7 @@ export function Stack() {
           </ToggleGroup>
         </div>
       </CardHeader>
-      <CardContent className="py-1">
+      <CardContent>
         <List
           height={200}
           itemCount={1000}
@@ -89,4 +89,3 @@ export function Stack() {
     </>
   );
 }
-

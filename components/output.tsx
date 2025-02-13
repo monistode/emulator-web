@@ -16,7 +16,7 @@ type DisplayType = "ascii" | "hex" | "dec" | "bin";
 function formatValue(value: number, type: DisplayType): React.ReactNode {
   switch (type) {
     case "ascii":
-      return <AsciiDisplay value={value} addBreak={true} />;
+      return <AsciiDisplay value={value} />;
     case "hex":
       return "0x" + value.toString(16).padStart(4, "0");
     case "dec":
@@ -74,16 +74,16 @@ function PortOutput({
       </div>
       <div
         className={cn(
-          "font-mono text-sm whitespace-pre-wrap break-all",
-          displayType === "ascii" && "leading-tight"
+          "font-mono text-sm",
+          displayType === "ascii"
+            ? "flex flex-row flex-wrap gap-0"
+            : "space-x-1"
         )}
       >
         {values.map((value, i) => (
-          <span
-            key={i}
-            className={cn(displayType === "ascii" ? "mr-0" : "mr-1")}
-          >
+          <span key={i}>
             {formatValue(value, displayType)}
+            {displayType === "ascii" && value === 10 && <br />}
           </span>
         ))}
       </div>
@@ -98,7 +98,7 @@ export function Output() {
 
   return (
     <Card className="flex-none">
-      <CardHeader className="py-2">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>IO</CardTitle>
           <ToggleGroup
@@ -124,7 +124,7 @@ export function Output() {
           </ToggleGroup>
         </div>
       </CardHeader>
-      <CardContent className="py-1">
+      <CardContent>
         <Tabs defaultValue="output" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="input">Input</TabsTrigger>
@@ -168,4 +168,3 @@ export function Output() {
     </Card>
   );
 }
-
