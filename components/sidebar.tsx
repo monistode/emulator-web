@@ -13,6 +13,7 @@ import {
   Terminal,
   MonitorPlay,
   Upload,
+  Github,
 } from "lucide-react";
 
 import {
@@ -30,6 +31,17 @@ export function Sidebar() {
   return (
     <SidebarRoot>
       <SidebarContent className="flex flex-col h-full">
+        <div className="flex h-14 items-center justify-between border-b px-6">
+          <Link
+            href="https://github.com/monistode"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-sm font-medium ring-offset-background transition-colors hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <Github className="mr-2 h-4 w-4" />
+            View on GitHub
+          </Link>
+        </div>
         <div className="flex-1">
           <SidebarGroup>
             <SidebarGroupContent>
