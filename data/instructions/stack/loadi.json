@@ -1,0 +1,40 @@
+{
+  "name": "LOAD $IMM",
+  "description": "Push a 16-bit immediate value onto the stack",
+  "format": {
+    "bytes": 4,
+    "fields": [
+      {
+        "type": "opcode",
+        "bits": 6,
+        "value": "000010"
+      },
+      {
+        "type": "padding",
+        "bits": 2
+      },
+      {
+        "type": "immediate",
+        "bits": 16,
+        "name": "value",
+        "value": "xxxxxxxxxxxxxxxx"
+      }
+    ]
+  },
+  "effects": {
+    "outputs": [
+      {
+        "name": "stack[top]",
+        "description": "The immediate 16-bit value is pushed onto the stack"
+      },
+      {
+        "name": "TOS",
+        "description": "Incremented by 2 after the push operation"
+      }
+    ]
+  },
+  "example": {
+    "code": ".text\n_start:\n    load 42     ; Push constant 42 onto the stack\n    halt",
+    "description": "Push a constant value (42) onto the top of the stack"
+  }
+} 

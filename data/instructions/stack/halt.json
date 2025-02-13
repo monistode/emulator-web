@@ -1,0 +1,23 @@
+{
+  "name": "HALT",
+  "description": "Stop the execution",
+  "format": {
+    "bytes": 1,
+    "fields": [
+      {
+        "type": "opcode",
+        "bits": 6,
+        "value": "000000"
+      }
+    ]
+  },
+  "effects": {
+    "notes": [
+      "Stops the processor execution immediately"
+    ]
+  },
+  "example": {
+    "code": ".text\n_start:\n    halt",
+    "description": "Simple program that immediately halts execution"
+  }
+} 

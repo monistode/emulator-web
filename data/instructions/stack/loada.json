@@ -1,0 +1,41 @@
+{
+  "name": "LOAD [$ADDR]",
+  "description": "Load a 16-bit value from memory at the specified address and push it onto the register stack",
+  "format": {
+    "bytes": 4,
+    "fields": [
+      {
+        "type": "opcode",
+        "bits": 6,
+        "value": "000100"
+      },
+      {
+        "type": "padding",
+        "bits": 2
+      },
+      {
+        "type": "immediate",
+        "bits": 16,
+        "name": "offset",
+        "value": "xxxxxxxxxxxxxxxx"
+      }
+    ]
+  },
+  "effects": {
+    "outputs": [
+      {
+        "name": "stack[top]",
+        "description": "The 16-bit value loaded from memory at the computed address"
+      },
+      {
+        "name": "TOS",
+        "description": "Is incremented by 2"
+      }
+    ],
+  },
+  "example": {
+    "code": ".text\n_start:\n    load [0x100]    ; Push 16 bits at 0x100 onto the stack\n    halt",
+    "description": "Load a 16-bit value using immediate addressing"
+  }
+}
+

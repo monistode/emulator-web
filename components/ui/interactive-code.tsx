@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { ProcessorType } from "monistode-emulator-bindings";
 import { toast } from "sonner";
 import { useAssemblerInit } from "@/util/assembler";
+import { RotateCcw } from "lucide-react";
 
 export function InteractiveCode({
   initialCode,
@@ -60,6 +61,8 @@ export function InteractiveCode({
     }
   };
 
+  const isModified = code !== initialCode;
+
   return (
     <Card className="my-4">
       <div className="relative">
@@ -68,15 +71,26 @@ export function InteractiveCode({
           onChange={(e) => setCode(e.target.value)}
           className="font-mono min-h-[100px] resize-none p-4 bg-neutral-900 rounded-b-none"
         />
-        <Button
-          variant="default"
-          size="sm"
-          onClick={handleRun}
-          disabled={isBuilding || !assembler}
-          className="absolute top-2 right-2"
-        >
-          {!assembler ? "Initializing..." : "Run in emulator"}
-        </Button>
+        <div className="absolute top-2 right-2 flex gap-2">
+          {isModified && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCode(initialCode)}
+              className="bg-neutral-900"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleRun}
+            disabled={isBuilding || !assembler}
+          >
+            {!assembler ? "Initializing..." : "Run in emulator"}
+          </Button>
+        </div>
       </div>
     </Card>
   );
