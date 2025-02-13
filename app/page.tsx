@@ -23,7 +23,7 @@ export default function Home() {
         <Controls />
       </Card>
       <div className="flex flex-row flex-wrap-reverse justify-stretch items-stretch gap-4 w-full">
-        <Card className="flex-1 min-w-[500px]">
+        <Card className="flex-1 md:min-w-[500px] min-w-full">
           <Memory />
         </Card>
         <div className="flex flex-col flex-1 gap-4 min-h-0 min-w-80">

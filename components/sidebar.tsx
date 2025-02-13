@@ -4,10 +4,15 @@ import Link from "next/link";
 import {
   Cpu,
   Code,
-  ScrollText,
+  FileCode,
+  Package,
   Layers,
+  Boxes,
   Microchip,
   CircuitBoard,
+  Terminal,
+  MonitorPlay,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -49,15 +54,69 @@ export function Sidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
           <SidebarGroup>
+            <SidebarGroupLabel className="px-4">Tools</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/tools/binutils">
+                      <Terminal className="mr-2 h-4 w-4" />
+                      <span>CLI Binutils</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/tools/emulator">
+                      <MonitorPlay className="mr-2 h-4 w-4" />
+                      <span>CLI Emulator</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/tools/uploader">
+                      <Upload className="mr-2 h-4 w-4" />
+                      <span>Executable Uploader</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel className="px-4">Formats</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/explore/object">
+                      <FileCode className="mr-2 h-4 w-4" />
+                      <span>Object Explorer</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/explore/executable">
+                      <Package className="mr-2 h-4 w-4" />
+                      <span>Executable Explorer</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
             <SidebarGroupLabel className="px-4">
-              Documentation
+              Architectures
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/docs/stack">
-                      <ScrollText className="mr-2 h-4 w-4" />
+                      <Boxes className="mr-2 h-4 w-4" />
                       <span>Stack</span>
                     </Link>
                   </SidebarMenuButton>
@@ -94,4 +153,3 @@ export function Sidebar() {
     </SidebarRoot>
   );
 }
-

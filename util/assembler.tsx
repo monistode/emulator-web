@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { ProcessorType } from "monistode-emulator-bindings";
 import init, {
   assemble,
@@ -8,7 +8,25 @@ import init, {
   WasmExecutable,
 } from "monistode-binutils-bindings";
 
-const wasmInitPromise = init();
+const initPromise = init().then(() => ({
+  assemble,
+  WasmExecutable,
+  Target,
+}));
+
+export function useAssemblerInit() {
+  const [assembler, setAssembler] = useState<{
+    assemble: typeof assemble;
+    WasmExecutable: typeof WasmExecutable;
+    Target: typeof Target;
+  } | null>(null);
+
+  useEffect(() => {
+    initPromise.then(setAssembler);
+  }, []);
+
+  return assembler;
+}
 
 const defaultCode = `.text
 start:
@@ -104,6 +122,7 @@ type AssemblerContext = {
     error?: string;
     binary?: Uint8Array;
   }>;
+  isInitialized: boolean;
 };
 
 const AssemblerContext = createContext<AssemblerContext>({
@@ -113,6 +132,7 @@ const AssemblerContext = createContext<AssemblerContext>({
   processorType: ProcessorType.Risc,
   setProcessorType: () => {},
   build: async () => ({ success: false }),
+  isInitialized: false,
 });
 
 export function AssemblerProvider({ children }: { children: React.ReactNode }) {
@@ -120,19 +140,26 @@ export function AssemblerProvider({ children }: { children: React.ReactNode }) {
   const [processorType, setProcessorType] = useState<ProcessorType>(
     ProcessorType.Risc
   );
+  const assembler = useAssemblerInit();
 
   const build = useCallback(async () => {
+    if (!assembler) {
+      return {
+        success: false,
+        error: "Assembler not initialized",
+      };
+    }
+
     try {
-      await wasmInitPromise;
       const target = {
-        [ProcessorType.Stack]: Target.Stack,
-        [ProcessorType.Acc]: Target.Risc, // TODO
-        [ProcessorType.Risc]: Target.Risc,
-        [ProcessorType.Cisc]: Target.Risc,
+        [ProcessorType.Stack]: assembler.Target.Stack,
+        [ProcessorType.Acc]: assembler.Target.Risc, // TODO
+        [ProcessorType.Risc]: assembler.Target.Risc,
+        [ProcessorType.Cisc]: assembler.Target.Risc,
       }[processorType];
 
-      const object = assemble(code, target);
-      const executable = WasmExecutable.from_object_file(object);
+      const object = assembler.assemble(code, target);
+      const executable = assembler.WasmExecutable.from_object_file(object);
       const binary = executable.serialize();
 
       return {
@@ -145,7 +172,7 @@ export function AssemblerProvider({ children }: { children: React.ReactNode }) {
         error: e as string,
       };
     }
-  }, [code, processorType]);
+  }, [code, processorType, assembler]);
 
   return (
     <AssemblerContext.Provider
@@ -156,6 +183,7 @@ export function AssemblerProvider({ children }: { children: React.ReactNode }) {
         processorType,
         setProcessorType,
         build,
+        isInitialized: !!assembler,
       }}
     >
       {children}

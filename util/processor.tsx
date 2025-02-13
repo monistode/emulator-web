@@ -40,6 +40,11 @@ class Stack {
   }
 }
 
+type ProcessorState = {
+  runner: Runner | null;
+  type: ProcessorType;
+};
+
 // Create a new context for the processor
 const ProcessorContext = createContext<{
   memory: MemoryBlock[];
@@ -63,7 +68,7 @@ const ProcessorContext = createContext<{
   step: () => void;
   startRunning: () => void;
   stopRunning: () => void;
-  setProcessorType: (type: ProcessorType) => void;
+  createProcessor: (type: ProcessorType) => void;
 }>({
   memory: [],
   status: ProcessorStatus.Ready,
@@ -78,7 +83,7 @@ const ProcessorContext = createContext<{
   step: () => {},
   startRunning: () => {},
   stopRunning: () => {},
-  setProcessorType: () => {},
+  createProcessor: () => {},
 });
 
 // Create the provider
@@ -87,31 +92,50 @@ export const ProcessorProvider = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const [processor, setProcessor] = useState<Runner | null>(null);
+  const [processor, setProcessor] = useState<ProcessorState>({
+    runner: null,
+    type: ProcessorType.Risc,
+  });
   const [memory, setMemory] = useState<MemoryBlock[]>([]);
   const [status, setStatus] = useState<ProcessorStatus>(ProcessorStatus.Ready);
   const [error, setError] = useState<string>();
-  const [processorType, setProcessorType] = useState<ProcessorType>(
-    ProcessorType.Risc
-  );
-  const [lastExecutable, setLastExecutable] = useState<Uint8Array>();
+  const [lastExecutable, setLastExecutable] = useState<{
+    binary: Uint8Array;
+    type: ProcessorType;
+  }>();
   const [stack, setStack] = useState(new Stack(null));
 
   const { handleInput, handleOutput, clearIO } = useIO();
   const { setSelectedByte } = useSelectedByte();
 
+  const createProcessor = useCallback(async (type: ProcessorType) => {
+    try {
+      await wasmInitPromise;
+      const runner = new Runner(type);
+      setProcessor({ runner, type });
+      setMemory(runner.get_memory());
+      setLastExecutable(undefined);
+      setStatus(ProcessorStatus.Ready);
+      setError(undefined);
+      setSelectedByte(null);
+      clearIO();
+    } catch (e) {
+      setError(e as string);
+      setStatus(ProcessorStatus.Errored);
+      toast.error("Failed to create processor", {
+        description: e as string,
+      });
+    }
+  }, [clearIO, setSelectedByte]);
+
   // Initialize processor
   useEffect(() => {
-    wasmInitPromise.then(() => {
-      const runner = new Runner(processorType);
-      setProcessor(runner);
-      setMemory(runner.get_memory());
-    });
-  }, []);
+    createProcessor(ProcessorType.Risc);
+  }, [createProcessor]);
 
   // Update stack when processor changes
   useEffect(() => {
-    setStack(new Stack(processor));
+    setStack(new Stack(processor.runner));
   }, [processor, memory]);
 
   const run = useCallback(
@@ -119,10 +143,10 @@ export const ProcessorProvider = ({
       output: (port: number, value: number) => void,
       input: (port: number) => number
     ) => {
-      if (processor) {
+      if (processor.runner) {
         try {
-          processor.run(output, input);
-          setMemory(processor.get_memory());
+          processor.runner.run(output, input);
+          setMemory(processor.runner.get_memory());
           setStatus(ProcessorStatus.Halted);
         } catch (e) {
           setError(e as string);
@@ -142,10 +166,10 @@ export const ProcessorProvider = ({
       input: (port: number) => number,
       n: number
     ) => {
-      if (!processor) return WasmProcessorContinue.Error;
+      if (!processor.runner) return WasmProcessorContinue.Error;
       try {
-        const result = processor.run_n(output, input, n);
-        setMemory(processor.get_memory());
+        const result = processor.runner.run_n(output, input, n);
+        setMemory(processor.runner.get_memory());
         return result;
       } catch (e) {
         setError(e as string);
@@ -161,9 +185,9 @@ export const ProcessorProvider = ({
 
   const setByte = useCallback(
     (memType: MemoryType, index: number, value: number) => {
-      if (processor) {
-        processor.set_memory(memType, index, value);
-        setMemory(processor.get_memory());
+      if (processor.runner) {
+        processor.runner.set_memory(memType, index, value);
+        setMemory(processor.runner.get_memory());
       }
     },
     [processor]
@@ -173,11 +197,11 @@ export const ProcessorProvider = ({
     async (executable: Uint8Array, type: ProcessorType) => {
       try {
         await wasmInitPromise;
-        const newProcessor = new Runner(type);
-        newProcessor.load_program(executable);
-        setProcessor(newProcessor);
-        setMemory(newProcessor.get_memory());
-        setLastExecutable(executable);
+        const runner = new Runner(type);
+        runner.load_program(executable);
+        setProcessor({ runner, type });
+        setMemory(runner.get_memory());
+        setLastExecutable({ binary: executable, type });
         setStatus(ProcessorStatus.Ready);
         setError(undefined);
         setSelectedByte(null);
@@ -194,30 +218,12 @@ export const ProcessorProvider = ({
   );
 
   const reset = useCallback(async () => {
-    await wasmInitPromise;
-    const newProcessor = new Runner(processorType);
-    if (lastExecutable) {
-      try {
-        newProcessor.load_program(lastExecutable);
-      } catch (e) {
-        setError(e as string);
-        setStatus(ProcessorStatus.Errored);
-        toast.error("Reset error", {
-          description: e as string,
-        });
-        return;
-      }
-    }
-    setProcessor(newProcessor);
-    setMemory(newProcessor.get_memory());
-    setStatus(ProcessorStatus.Ready);
-    setError(undefined);
-    setSelectedByte(null);
-    clearIO();
-  }, [processorType, lastExecutable, clearIO, setSelectedByte]);
+    if (!lastExecutable) return;
+    await upload(lastExecutable.binary, lastExecutable.type);
+  }, [lastExecutable, upload]);
 
   const step = useCallback(() => {
-    if (!processor) return;
+    if (!processor.runner) return;
     const result = runN(handleOutput, handleInput, 1);
     switch (result) {
       case WasmProcessorContinue.Continue:
@@ -270,41 +276,14 @@ export const ProcessorProvider = ({
     setStatus(ProcessorStatus.Paused);
   }, []);
 
-  const handleProcessorTypeChange = useCallback(
-    async (type: ProcessorType) => {
-      setProcessorType(type);
-      await wasmInitPromise;
-      const newProcessor = new Runner(type);
-      if (lastExecutable) {
-        try {
-          newProcessor.load_program(lastExecutable);
-        } catch (e) {
-          setError(e as string);
-          setStatus(ProcessorStatus.Errored);
-          toast.error("Processor type change error", {
-            description: e as string,
-          });
-          return;
-        }
-      }
-      setProcessor(newProcessor);
-      setMemory(newProcessor.get_memory());
-      setStatus(ProcessorStatus.Ready);
-      setError(undefined);
-      setSelectedByte(null);
-      clearIO();
-    },
-    [lastExecutable, clearIO, setSelectedByte]
-  );
-
   return (
     <ProcessorContext.Provider
       value={{
         memory,
         status,
         error,
-        processorType,
-        runner: processor,
+        processorType: processor.type,
+        runner: processor.runner,
         stack,
         run,
         runN,
@@ -314,7 +293,7 @@ export const ProcessorProvider = ({
         step,
         startRunning,
         stopRunning,
-        setProcessorType: handleProcessorTypeChange,
+        createProcessor,
       }}
     >
       {children}

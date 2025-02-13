@@ -180,7 +180,7 @@ function MemoryGrid({
   );
 }
 
-function MemoryView({ block }: { block: MemoryBlock }) {
+function MemoryView({ block, memoryLength }: { block: MemoryBlock, memoryLength: number }) {
   const { selectedByte } = useSelectedByte();
   const [scrollToAddress, setScrollToAddress] = useState<
     ((address: number) => void) | null
@@ -205,10 +205,8 @@ function MemoryView({ block }: { block: MemoryBlock }) {
 
     // Show warning toast for Harvard architecture if multiple memory blocks exist
     const now = Date.now();
-    if (now - lastWarningRef.current >= 15000) {
-      // 15 seconds debounce
-      const memoryBlocks = document.querySelectorAll('[role="tabpanel"]');
-      if (memoryBlocks.length > 1) {
+    if (now - lastWarningRef.current >= 15000) { // 15 seconds debounce
+      if (memoryLength > 1) {
         toast.warning("Multiple memory blocks detected", {
           description:
             "This is a Harvard architecture - make sure you're viewing the correct memory block for your address.",
@@ -216,7 +214,7 @@ function MemoryView({ block }: { block: MemoryBlock }) {
         lastWarningRef.current = now;
       }
     }
-  }, [selectedByte, scrollToAddress, shouldScroll]);
+  }, [selectedByte, scrollToAddress, shouldScroll, memoryLength]);
 
   // Update shouldScroll when selectedByte changes from outside (e.g. register click)
   useEffect(() => {
@@ -293,7 +291,7 @@ export default function Memory() {
       </CardHeader>
       <CardContent>
         {memory.length === 1 ? (
-          <MemoryView block={memory[0]} />
+          <MemoryView block={memory[0]} memoryLength={memory.length} />
         ) : (
           <Tabs defaultValue={memory[0].cell_type_name()} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -311,7 +309,7 @@ export default function Memory() {
                 key={block.cell_type_name()}
                 value={block.cell_type_name()}
               >
-                <MemoryView block={block} />
+                <MemoryView block={block} memoryLength={memory.length} />
               </TabsContent>
             ))}
           </Tabs>

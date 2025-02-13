@@ -31,12 +31,12 @@ export function Controls() {
   const {
     status,
     processorType,
-    setProcessorType,
     upload,
     reset,
     step,
     startRunning,
     stopRunning,
+    createProcessor,
   } = useProcessor();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,17 +50,18 @@ export function Controls() {
     upload(new Uint8Array(buffer), processorType);
   };
 
+  const handleArchitectureChange = (value: string) => {
+    const type = ProcessorType[value as keyof typeof ProcessorType];
+    createProcessor(type);
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between w-full">
+      <div className="flex flex-wrap gap-4 items-center justify-between w-full">
         <div className="flex items-center gap-4">
           <Select
             value={ProcessorType[processorType]}
-            onValueChange={(value) =>
-              setProcessorType(
-                ProcessorType[value as keyof typeof ProcessorType]
-              )
-            }
+            onValueChange={handleArchitectureChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select architecture" />
