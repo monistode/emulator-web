@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import Memory from "@/components/memory";
 import { Controls } from "@/components/controls";
-import { Output } from "@/components/output";
+import { IO } from "@/components/output";
 import { Registers } from "@/components/registers";
 import { Stack } from "@/components/stack";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,7 +35,7 @@ export default function Home() {
           </Card>
         </div>
       </div>
-      <Output />
+      <IO />
     </div>
   );
 }

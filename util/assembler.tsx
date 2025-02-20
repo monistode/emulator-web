@@ -109,6 +109,25 @@ _start:
     halt`,
     description: "A simple program that outputs 'Hello, World!' to port 0",
   },
+  {
+    id: "stack-cat",
+    name: "Cat",
+    architecture: ProcessorType.Stack,
+    code: `.text
+_start:
+    in 0 # input a value
+    dup
+    cmpe 0 # see if we got anything - the UI returns a null character if not
+    jc looparound # if it is equal to 0 - skip this character
+    out 0
+    jmp _start
+    # probably a good idea to keep the top of stack where it is - just for convenience
+    push
+looparound: # here because of a bug in the linker - TODO fix, sorry
+    pop %FR # sure - why not fill the flag register with zeroes
+    jmp _start`,
+    description: "A program that reads input from port 0 and echoes it back to port 0",
+  },
 ];
 
 type AssemblerContext = {
